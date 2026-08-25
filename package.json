@@ -1,0 +1,14 @@
+{
+  "name": "teltonika-ftc887-gateway",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "TCP gateway from Teltonika FTC887 devices to the Budisa HTTPS API",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "start": "node src/index.js",
+    "test": "node --test",
+    "simulate": "node scripts/simulate-device.js",
+    "mock-render": "node scripts/mock-render.js"
+  }
+}
