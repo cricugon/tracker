@@ -37,6 +37,7 @@ export function loadConfig() {
     nodeEnv,
     tcpPort: integer('TCP_PORT', 5000, { min: 1, max: 65535 }),
     healthPort: integer('HEALTH_PORT', Number(process.env.PORT) || 3000, { min: 1, max: 65535 }),
+    trackerModel: process.env.TRACKER_MODEL || 'FTC887',
     renderUrl,
     trackerKeyId: process.env.TRACKER_KEY_ID || 'gateway-v1',
     sharedSecret,
@@ -51,4 +52,3 @@ export function loadConfig() {
     allowInsecureRenderUrl,
   });
 }
-

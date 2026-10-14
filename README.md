@@ -1,9 +1,9 @@
-# Gateway Teltonika FTC887 para Budisa
+# Gateway Teltonika para Budisa
 
-Servicio Node.js sin dependencias de ejecución que recibe conexiones TCP de una flota de FTC887, decodifica Teltonika Codec 8 Extended (y Codec 8), envía cada paquete AVL como un batch firmado a Budisa y solo confirma al dispositivo cuando Render ha confirmado la persistencia de todos sus registros.
+Servicio Node.js sin dependencias de ejecución que recibe conexiones TCP de dispositivos Teltonika, decodifica Teltonika Codec 8 Extended (y Codec 8), envía cada paquete AVL como un batch firmado a Budisa y solo confirma al dispositivo cuando Render ha confirmado la persistencia de todos sus registros.
 
 ```text
-FTC887 -- TCP/Codec 8E --> Railway gateway -- HTTPS + HMAC --> Budisa /tracker --> BD
+FMC880/FTC887 -- TCP/Codec 8E --> Railway gateway -- HTTPS + HMAC --> Budisa /tracker --> BD
 ```
 
 El gateway no tiene base de datos. La relación autoritativa `IMEI -> tracker -> camión`, la restricción UNIQUE de `eventId` y la persistencia pertenecen a Budisa.
@@ -38,6 +38,7 @@ El proceso usa variables del entorno del sistema/Railway. `.env.example` es una 
 | `NODE_ENV` | `production` |
 | `TCP_PORT` | `5000` |
 | `HEALTH_PORT` o `PORT` | `3000` (si existe `HEALTH_PORT`, tiene prioridad) |
+| `TRACKER_MODEL` | `FMC880` para un FMC880; solo es metadato del payload |
 | `RENDER_TRACKER_URL` | `https://budisa.onrender.com/tracker` |
 | `TRACKER_KEY_ID` | `gateway-v1` |
 | `TRACKER_SHARED_SECRET` | Secret aleatorio compartido, nunca `CHANGE_ME` |
@@ -171,6 +172,7 @@ Codec 8E interpreta timestamp UInt64, prioridad, GPS firmado para hemisferios su
 - **Render 500:** revise la transacción, constraint, conexión a BD y logs del backend; el tracker recibirá ACK cero.
 - **Reenvío continuo:** Render debe responder 2xx, JSON válido y accepted exactamente igual al batch. Compruebe también la restricción UNIQUE de eventId.
 - **GPS 0/no fix:** el registro se conserva con `gps.valid=false`; espere fix GNSS y revise instalación/antena.
+- **Sensor EYE no visible:** el gateway no inventa ni descarta IO desconocidos: todos los IDs recibidos se conservan en `records[].io.raw`. En un FMC880, un EYE Sensor configurado por nombre puede aparecer como el IO variable `11317`; si se configura por MAC, sus valores aparecen como IO del registro normal. El evento Railway `avl_packet_parsed` incluye ahora `ioIds`; si no aparece `11317` ni ningún ID del sensor en `ioIds`/`io.raw`, revise el emparejamiento Bluetooth, el filtro del sensor y que los IO correspondientes estén habilitados en la configuración de envío del FMC880. Cambiar `TRACKER_MODEL` solo corrige la etiqueta `device.model`; no activa el sensor.
 - **TCP Proxy incorrecto:** Railway debe apuntar al puerto interno `5000`; Teltonika usa el host/puerto público entregado.
 
 ## Estructura

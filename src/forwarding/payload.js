@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 
-export function buildPayload({ imei, parsedPacket, receivedAt = new Date() }) {
+export function buildPayload({ imei, parsedPacket, receivedAt = new Date(), model = 'FTC887' }) {
   const records = parsedPacket.records.map((record, index) => ({
     ...record,
     eventId: createHash('sha256').update(`${imei}:${parsedPacket.packetId}:${index}`).digest('hex'),
@@ -10,7 +10,7 @@ export function buildPayload({ imei, parsedPacket, receivedAt = new Date() }) {
   return {
     schemaVersion: 1,
     source: 'teltonika-gateway',
-    device: { manufacturer: 'Teltonika', model: 'FTC887', imei, ...(iccid ? { iccid } : {}) },
+    device: { manufacturer: 'Teltonika', model, imei, ...(iccid ? { iccid } : {}) },
     packet: {
       packetId: parsedPacket.packetId,
       codec: parsedPacket.codec,
@@ -20,4 +20,3 @@ export function buildPayload({ imei, parsedPacket, receivedAt = new Date() }) {
     records,
   };
 }
-

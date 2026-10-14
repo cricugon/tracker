@@ -93,8 +93,21 @@ export function handleConnection(socket, { config, logger, metrics, activeDevice
           return;
         }
         metrics.recordsReceived += parsed.recordCount;
-        logger.info('avl_packet_parsed', { imei: context.imei, codec: parsed.codec, records: parsed.recordCount, packetId: parsed.packetId });
-        const payload = buildPayload({ imei: context.imei, parsedPacket: parsed });
+        const ioIds = [...new Set(
+          parsed.records.flatMap((record) => Object.keys(record.io.raw).map(Number)),
+        )].sort((a, b) => a - b);
+        logger.info('avl_packet_parsed', {
+          imei: context.imei,
+          codec: parsed.codec,
+          records: parsed.recordCount,
+          packetId: parsed.packetId,
+          ioIds,
+        });
+        const payload = buildPayload({
+          imei: context.imei,
+          parsedPacket: parsed,
+          model: config.trackerModel,
+        });
         logger.info('render_forward_started', { imei: context.imei, packetId: parsed.packetId, records: parsed.recordCount });
         try {
           await renderClient.forward(payload);
