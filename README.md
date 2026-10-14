@@ -39,6 +39,7 @@ El proceso usa variables del entorno del sistema/Railway. `.env.example` es una 
 | `TCP_PORT` | `5000` |
 | `HEALTH_PORT` o `PORT` | `3000` (si existe `HEALTH_PORT`, tiene prioridad) |
 | `TRACKER_MODEL` | `FMC880` para un FMC880; solo es metadato del payload |
+| `EYE_SENSOR_BYTE_ORDER` | `big` (firmware EYE actual); use `little` solo con firmware EYE anterior que lo requiera |
 | `RENDER_TRACKER_URL` | `https://budisa.onrender.com/tracker` |
 | `TRACKER_KEY_ID` | `gateway-v1` |
 | `TRACKER_SHARED_SECRET` | Secret aleatorio compartido, nunca `CHANGE_ME` |
@@ -173,6 +174,7 @@ Codec 8E interpreta timestamp UInt64, prioridad, GPS firmado para hemisferios su
 - **Reenvío continuo:** Render debe responder 2xx, JSON válido y accepted exactamente igual al batch. Compruebe también la restricción UNIQUE de eventId.
 - **GPS 0/no fix:** el registro se conserva con `gps.valid=false`; espere fix GNSS y revise instalación/antena.
 - **Sensor EYE no visible:** el gateway no inventa ni descarta IO desconocidos: todos los IDs recibidos se conservan en `records[].io.raw`. En un FMC880, un EYE Sensor configurado por nombre puede aparecer como el IO variable `11317`; si se configura por MAC, sus valores aparecen como IO del registro normal. El evento Railway `avl_packet_parsed` incluye ahora `ioIds`; si no aparece `11317` ni ningún ID del sensor en `ioIds`/`io.raw`, revise el emparejamiento Bluetooth, el filtro del sensor y que los IO correspondientes estén habilitados en la configuración de envío del FMC880. Cambiar `TRACKER_MODEL` solo corrige la etiqueta `device.model`; no activa el sensor.
+- **Pitch/roll EYE:** los IDs fijos de pitch/roll y los parámetros 11/12 de AVL 11317 se normalizan en `io.known` como grados con signo, con campos `Raw` y `Valid`; el valor hexadecimal original permanece intacto en `io.raw`. Los valores fuera de −90…90° (pitch) o −180…180° (roll) quedan como `null` en el campo normalizado y no deben interpretarse como estado de la carga.
 - **TCP Proxy incorrecto:** Railway debe apuntar al puerto interno `5000`; Teltonika usa el host/puerto público entregado.
 
 ## Estructura

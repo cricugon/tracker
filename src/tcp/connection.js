@@ -86,7 +86,11 @@ export function handleConnection(socket, { config, logger, metrics, activeDevice
         metrics.packetsReceived += 1;
         logger.info('avl_packet_received', { imei: context.imei, bytes: frame.length, ...(config.logRawPackets ? { frameHex: frame.toString('hex') } : {}) });
         let parsed;
-        try { parsed = parseAvlFrame(frame, config.maxAvlDataLength); }
+        try {
+          parsed = parseAvlFrame(frame, config.maxAvlDataLength, {
+            eyeSensorByteOrder: config.eyeSensorByteOrder,
+          });
+        }
         catch (error) {
           if (error instanceof TeltonikaPacketError) reject(error.code, error);
           else reject('invalid_packet', error);

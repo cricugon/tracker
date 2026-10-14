@@ -24,7 +24,7 @@ function readGps(reader) {
   };
 }
 
-function parseIo(reader, extended) {
+function parseIo(reader, extended, { eyeSensorByteOrder = 'big' } = {}) {
   const readId = extended ? () => reader.u16() : () => reader.u8();
   const readCount = extended ? () => reader.u16() : () => reader.u8();
   const eventId = readId();
@@ -55,10 +55,10 @@ function parseIo(reader, extended) {
   if (actualTotal !== declaredTotal) {
     throw new RangeError(`IO count mismatch: declared ${declaredTotal}, parsed ${actualTotal}`);
   }
-  return { eventId, raw, known: knownIoValues(raw) };
+  return { eventId, raw, known: knownIoValues(raw, { byteOrder: eyeSensorByteOrder }) };
 }
 
-export function parseCodecData(data, { codecId, extended }) {
+export function parseCodecData(data, { codecId, extended, eyeSensorByteOrder = 'big' }) {
   const reader = new BufferReader(data);
   if (reader.u8() !== codecId) throw new RangeError(`Expected codec 0x${codecId.toString(16)}`);
   const recordCount = reader.u8();
@@ -71,7 +71,7 @@ export function parseCodecData(data, { codecId, extended }) {
       ...time,
       priority: reader.u8(),
       gps: readGps(reader),
-      io: parseIo(reader, extended),
+      io: parseIo(reader, extended, { eyeSensorByteOrder }),
     });
   }
   const trailingCount = reader.u8();
@@ -79,4 +79,3 @@ export function parseCodecData(data, { codecId, extended }) {
   if (reader.remaining !== 0) throw new RangeError('Unexpected bytes after AVL records');
   return { recordCount, records };
 }
-

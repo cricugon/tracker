@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { parseCodec8Extended } from '../src/teltonika/codec8e.js';
+import { knownIoValues } from '../src/teltonika/avlIds.js';
 import { makeCodec8eData, FIXTURE_TIMESTAMP } from './helpers/fixture.js';
 
 test('decodes Codec 8 Extended GPS, time and every IO width', () => {
@@ -31,3 +32,31 @@ test('rejects mismatching record counts and truncation', () => {
   assert.throws(() => parseCodec8Extended(data.subarray(0, 20)), /Truncated/);
 });
 
+test('normalizes EYE fixed pitch and roll without changing raw values', () => {
+  const known = knownIoValues({ '10816': 244, '10832': 65511, '10833': 250 });
+  assert.equal(known.eyePitch1Deg, -12);
+  assert.equal(known.eyePitch1DegRaw, 244);
+  assert.equal(known.eyePitch1DegValid, true);
+  assert.equal(known.eyeRoll1Deg, -25);
+  assert.equal(known.eyeRoll1DegRaw, 65511);
+  assert.equal(known.eyeRoll1DegValid, true);
+  assert.equal(known.eyeRoll2Deg, null);
+  assert.equal(known.eyeRoll2DegRaw, 250);
+  assert.equal(known.eyeRoll2DegValid, false);
+});
+
+test('decodes EYE AVL 11317 pitch and roll in both supported byte orders', () => {
+  const bigEndian = knownIoValues({ '11317': { hex: '01070b01f40c02ffe7' } });
+  assert.equal(bigEndian.eyeSensors.length, 1);
+  assert.equal(bigEndian.eyeSensors[0].pitchDeg, -12);
+  assert.equal(bigEndian.eyeSensors[0].rollDeg, -25);
+  assert.equal(bigEndian.eyeSensors[0].pitchRaw, 244);
+  assert.equal(bigEndian.eyeSensors[0].rollRaw, 65511);
+
+  const littleEndian = knownIoValues(
+    { '11317': { hex: '01070b01f40c02e7ff' } },
+    { byteOrder: 'little' },
+  );
+  assert.equal(littleEndian.eyeSensors[0].pitchDeg, -12);
+  assert.equal(littleEndian.eyeSensors[0].rollDeg, -25);
+});

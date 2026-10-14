@@ -7,7 +7,7 @@ export class TeltonikaPacketError extends Error {
   constructor(code, message) { super(message); this.name = 'TeltonikaPacketError'; this.code = code; }
 }
 
-export function parseAvlFrame(frame, maxDataLength = 4096) {
+export function parseAvlFrame(frame, maxDataLength = 4096, options = {}) {
   if (!Buffer.isBuffer(frame) || frame.length < 13) throw new TeltonikaPacketError('invalid_packet', 'AVL frame is too short');
   if (frame.readUInt32BE(0) !== 0) throw new TeltonikaPacketError('invalid_packet', 'Invalid AVL preamble');
   const dataLength = frame.readUInt32BE(4);
@@ -19,8 +19,8 @@ export function parseAvlFrame(frame, maxDataLength = 4096) {
   if (receivedCrc !== calculatedCrc) throw new TeltonikaPacketError('invalid_crc', `CRC mismatch (received ${receivedCrc}, calculated ${calculatedCrc})`);
   let parsed;
   try {
-    if (data[0] === 0x8e) parsed = parseCodec8Extended(data);
-    else if (data[0] === 0x08) parsed = parseCodec8(data);
+    if (data[0] === 0x8e) parsed = parseCodec8Extended(data, options);
+    else if (data[0] === 0x08) parsed = parseCodec8(data, options);
     else throw new TeltonikaPacketError('unsupported_codec', `Unsupported codec 0x${data[0].toString(16)}`);
   } catch (error) {
     if (error instanceof TeltonikaPacketError) throw error;
@@ -37,4 +37,3 @@ export function encodeAvlFrame(data) {
   frame.writeUInt32BE(crc16Ibm(data), 8 + data.length);
   return frame;
 }
-

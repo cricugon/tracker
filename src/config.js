@@ -19,7 +19,12 @@ export function loadConfig() {
   const nodeEnv = process.env.NODE_ENV || 'development';
   const renderUrl = process.env.RENDER_TRACKER_URL || 'https://budisa.onrender.com/tracker';
   const sharedSecret = process.env.TRACKER_SHARED_SECRET || '';
+  const eyeSensorByteOrder = process.env.EYE_SENSOR_BYTE_ORDER || 'big';
   const allowInsecureRenderUrl = boolean('ALLOW_INSECURE_RENDER_URL');
+
+  if (!['big', 'little'].includes(eyeSensorByteOrder)) {
+    throw new Error('EYE_SENSOR_BYTE_ORDER must be big or little');
+  }
 
   if (!sharedSecret || sharedSecret === 'CHANGE_ME') {
     throw new Error('TRACKER_SHARED_SECRET must be configured and must not be CHANGE_ME');
@@ -38,6 +43,7 @@ export function loadConfig() {
     tcpPort: integer('TCP_PORT', 5000, { min: 1, max: 65535 }),
     healthPort: integer('HEALTH_PORT', Number(process.env.PORT) || 3000, { min: 1, max: 65535 }),
     trackerModel: process.env.TRACKER_MODEL || 'FTC887',
+    eyeSensorByteOrder,
     renderUrl,
     trackerKeyId: process.env.TRACKER_KEY_ID || 'gateway-v1',
     sharedSecret,
